@@ -1,0 +1,22 @@
+library(tidyverse)
+technology <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-19/technology.csv')
+head(technology)
+labels <- technology %>% select(label) %>% distinct()
+
+electricity <- technology %>% filter(startsWith(label, "Elec"))
+
+usaelectric <- electricity %>% filter(iso3c=='USA')
+usaelectric$variable <- recode(usaelectric$variable, elec_coal = "Coal", elec_gas="Gas", elec_hydro="Hydroelectric", elec_nuc="Nuclear", elec_oil="Oil",
+                               elec_renew_other="Other renewables", elec_solar="Solar", elec_wind="Wind")
+levels(usaelectric$variable)
+
+tiff("usa_elec.tiff", units="in", width=6, height=4, res=300)
+usaelectric %>% filter(year >= 2003) %>% 
+  filter(variable != 'elec_cons') %>% 
+  ggplot(aes(x=year, y=value, color=variable)) +
+  ylab("Terwatt Hours") +
+  geom_line(size=0.7) +
+  ggtitle("Electricity Sources in USA for 2003-2020") +
+  theme_minimal() +
+  theme(legend.title=element_blank()) +
+  dev.off()
